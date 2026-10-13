@@ -1,0 +1,11 @@
+import {rmSync,mkdirSync,copyFileSync} from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const project=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const dist=path.join(project,'dist');
+rmSync(dist,{recursive:true,force:true});
+mkdirSync(path.join(dist,'server'),{recursive:true});
+mkdirSync(path.join(dist,'.openai'),{recursive:true});
+copyFileSync(path.join(project,'worker','index.js'),path.join(dist,'server','index.js'));
+copyFileSync(path.join(project,'.openai','hosting.json'),path.join(dist,'.openai','hosting.json'));
+console.log('Built '+dist);

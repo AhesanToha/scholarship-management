@@ -1,0 +1,30 @@
+Seat Desk — English interface, Light/Dark appearance and volunteer desk
+
+1. Stop the old server with Ctrl+C.
+2. Back up the existing project folder.
+3. Copy all files from this ZIP into the SAME project folder and replace code.
+4. KEEP .local-data and node_modules; this ZIP does not contain your local records.
+5. Run START_WINDOWS.cmd, or npm.cmd install followed by npm.cmd start.
+6. Open http://localhost:3000/dashboard and refresh with Ctrl+Shift+R.
+
+Volunteer desk: http://localhost:3000/volunteer
+Copy the link in Settings. The desk searches current server data by QR or exact
+roll (English/Bengali digits), then shows room, bench, seat and directions.
+
+For volunteers on phones, host the app on HTTPS and share YOUR-HOST/volunteer.
+localhost is only for the computer running the server. No live URL was deployed
+as part of this local update. Camera permission is required.
+
+Dashboard and navigation are simplified. School workflows, photos, strict
+seating rules, rolls, permanent QR tokens and admit-card layout are preserved.
+
+Appearance: Settings > Appearance > Dark mode toggle.
+The preference is saved on this device. All interface labels and messages are
+in English; existing student, school and examination records are preserved.
+
+Latest update:
+- Class labels throughout the interface.
+- Phone-first school portal with Register student modal and student cards.
+- School submissions require student name, father's name and class.
+- Tap the 3:4 photo preview to upload a photo.
+- Cloudflare deployment guide: DEPLOY_CLOUDFLARE.md.

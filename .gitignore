@@ -1,0 +1,10 @@
+node_modules/
+.react-build/
+tests/.compiled/
+site.tar.gz
+
+.local-data/
+
+.cloud-export/
+.wrangler/
+.dev.vars

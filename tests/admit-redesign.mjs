@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {build} from 'esbuild';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {formatExamDate,instructionsFor,defaultInstructions} from '../src/lib/admit-format.js';
+await build({entryPoints:['src/pages/AdmitCards.jsx'],bundle:true,platform:'node',format:'esm',outfile:'tests/.compiled/AdmitRedesign.js',packages:'external',jsx:'automatic'});
+const {AdmitCard}=await import('./.compiled/AdmitRedesign.js');
+assert.equal(formatExamDate('2026-10-17'),'17 October,2026');assert.equal(formatExamDate('2028-02-29'),'29 February,2028');assert.equal(formatExamDate('2026-02-31'),'2026-02-31');assert.equal(formatExamDate(''),'—');
+const student={name:'Sample Student',fatherName:'Sample Father',grade:'7',school:'Aunushilon Academy',roll:'26070001',qrToken:'1234567890abcdefghijkl'},exam={name:'SCIENCE QUEST 2026',date:'2026-10-17',time:'09:00',calculatorAllowed:'yes',categories:[{id:'a',name:'PRIMARY',from:3,to:5},{id:'b',name:'JUNIOR',from:6,to:8}],center:'Exam centre'};
+const render=(s=student,e=exam)=>renderToStaticMarkup(React.createElement(AdmitCard,{student:s,exam:e,origin:'https://example.org'})),html=render();assert(html.includes('17 October,2026'));assert(html.includes('category-value">JUNIOR'));assert(!html.includes('category-value">PRIMARY'));assert(!html.includes('science-categories i'));assert(html.includes('calculator-allowed'));assert(html.includes('Calculator is allowed.'));assert(html.includes('science-watermarks'));assert(html.includes('banner-rays'));assert(html.includes('footer-flourish'));
+for(const line of defaultInstructions.split('\n'))assert(html.includes(line));assert(html.includes('Scan the QR code to view your latest seat information.'));assert.equal((html.match(/<li[ >]/g)||[]).length,6);
+const noCalculator=render(student,{...exam,calculatorAllowed:'no',name:'NEXT EXAM'});assert(noCalculator.includes('Calculator is not allowed.'));assert(noCalculator.includes('calculator-prohibited'));assert(noCalculator.includes('<text x="370" y="215" font-size="48">NEXT EXAM</text>'));assert(!noCalculator.includes('SCIENCE QUEST 2026'));
+assert.equal(render({...student,seat:{room:'New room',bench:10,position:'A'}}),html,'printed admit changed when seat moved');assert.equal(instructionsFor({instructions:'Bring this Admit Card to the examination centre.\nArrive at least 30 minutes before the examination.\nFollow the instructions of the Organizing Committee.\nScan the QR for your latest seat information.'}),defaultInstructions);assert.equal(instructionsFor({instructions:'My own instruction.'}),'My own instruction.');
+const css=readFileSync('src/admit.css','utf8');assert(css.includes('width:194mm;height:132mm'));assert(css.includes('@page admit-card{size:A5 landscape;margin:8mm}'));assert(css.includes('.contestant-info dd{margin:0;border:0'));assert(css.includes('fill-opacity')||html.includes('fill-opacity=".16"'));assert(css.includes('width:32mm;height:32mm'));
+const schools=readFileSync('src/pages/Schools.jsx','utf8');assert(!schools.includes('className="school-card"'));for(const feature of ['school-account-table','school-detail-button','Copy URL','password reset','setNotice(s)','setDetail(s.id)','setCorrection(q)'])assert(schools.includes(feature));
+console.log('PASS: reference instructions, calculator setting highlight, exact date format, single dynamic category, science watermark/title update, permanent card data, A5 and school-table feature preservation');

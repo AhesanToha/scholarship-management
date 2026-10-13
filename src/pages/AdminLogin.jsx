@@ -1,0 +1,10 @@
+import React,{useEffect,useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {Paper,Title,Text,PasswordInput,Button,Alert,ThemeIcon} from '@mantine/core';
+import {IconShieldLock} from '@tabler/icons-react';
+export default function AdminLogin(){
+ const [password,setPassword]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[info,setInfo]=useState(null);const navigate=useNavigate();
+ useEffect(()=>{let active=true;fetch('/api/me',{cache:'no-store'}).then(r=>r.json()).then(data=>{if(!active)return;setInfo(data);if(data.owner)navigate('/dashboard',{replace:true})}).catch(()=>{if(active)setError('Unable to connect. Try again.')});return()=>{active=false}},[]);
+ async function login(e){e.preventDefault();setBusy(true);setError('');try{const response=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})}),data=await response.json();if(!response.ok)throw Error(data.error||'Sign-in failed.');setPassword('');navigate('/dashboard',{replace:true})}catch(e){setError(e.message)}finally{setBusy(false)}}
+ return <main className="admin-login-page"><Paper className="admin-login-card" p="xl"><ThemeIcon size={52} radius="lg" variant="light"><IconShieldLock size={29}/></ThemeIcon><Text c="dimmed" size="xs" mt="xl" fw={700}>SEAT DESK</Text><Title order={1} size="h2" mt="xs">Administrator sign-in</Title><Text c="dimmed" size="sm" mt="sm" mb="xl">Manage schools, registrations and exam seating.</Text>{error&&<Alert color="red" role="alert" mb="lg">{error}</Alert>}{info?.passwordAuth?<form onSubmit={login}><PasswordInput label="Admin password" value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" size="md"/><Button type="submit" fullWidth mt="xl" size="md" loading={busy}>Sign in</Button></form>:info?.configured?<Button component="a" href={'/signin-with-chatgpt?return_to='+encodeURIComponent('/dashboard')} fullWidth>Sign in with ChatGPT</Button>:<Text size="sm" c="dimmed">Administrator sign-in is not configured. Contact the site owner.</Text>}</Paper></main>
+}

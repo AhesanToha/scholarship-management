@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {api} from '../worker/api.js';
+import {seed,ensureTokens,buildAllocationPlan,applyAllocationPlan} from '../src/lib/domain.js';
+const state=seed();ensureTokens(state);applyAllocationPlan(state,buildAllocationPlan(state,{roomId:state.rooms[0].id,grades:['4','5']}));
+const env={BUCKET:{async get(){return {json:async()=>state}}},ADMIN_EMAIL:'owner@example.org'};
+const get=(path,method='GET')=>api(new Request('https://example.org'+path,{method}),env);
+const student=state.students.find(s=>s.seat),url='/api/volunteer/seat?roll=';
+let res=await get(url+student.roll);assert.equal(res.status,200);const data=await res.json();assert.equal(data.roll,student.roll);assert.equal(data.seat.bench,student.seat.bench);
+assert(!('name' in data));for(const privateValue of [student.name,student.school,student.qrToken])assert(!JSON.stringify(data).includes(privateValue));
+const bn=student.roll.replace(/\d/g,n=>'০১২৩৪৫৬৭৮৯'[Number(n)]);assert.equal((await get(url+encodeURIComponent(' '+bn+' '))).status,200);
+assert.equal((await get(url+'999999999999')).status,404);assert.equal((await get(url+'abc')).status,400);assert.equal((await get(url)).status,400);assert.equal((await get(url+student.roll,'POST')).status,405);
+assert.equal((await get('/api/state')).status,403);
+const qr=await (await get('/api/seat/'+student.qrToken)).json();assert.deepEqual(qr,data);
+student.seat=null;assert.equal((await (await get(url+student.roll)).json()).seat,null);
+console.log('PASS: standalone roll lookup, Bengali digits, private fields excluded, QR parity, live changes, invalid/missing roll, methods, admin isolation');

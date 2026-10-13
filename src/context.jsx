@@ -1,0 +1,6 @@
+import {Notification} from '@mantine/core';import {IconCheck} from '@tabler/icons-react';
+import React,{createContext,useContext,useEffect,useState,useSyncExternalStore} from 'react';
+import {createExamStore} from './lib/store.js';
+const Context=createContext(null);
+export function ExamProvider({children,store:provided}){const [store]=useState(()=>provided||createExamStore());const snapshot=useSyncExternalStore(store.subscribe,store.getSnapshot,store.getSnapshot);const [toast,setToast]=useState('');useEffect(()=>{store.boot();const timer=setInterval(()=>store.refresh?.(),30000);return()=>clearInterval(timer)},[store]);useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(t)},[toast]);const notify=message=>setToast(String(message));const run=fn=>{try{return fn()}catch(e){notify(e.message)}};return <Context.Provider value={{...snapshot,store,notify,run}}>{children}{toast&&<div id="toast" style={{display:'block',padding:0,background:'transparent'}} role="status"><Notification color="teal" title="Seat Desk" icon={<IconCheck size={18}/>} onClose={()=>setToast('')}>{toast}</Notification></div>}</Context.Provider>}
+export const useExam=()=>useContext(Context);

@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scholarship-seat-desk",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-10-13",
+  "workers_dev": true,
+  "vars": { "TESTING_MODE": "false" },
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "scholarship-seat-desk-data" }]
+}
