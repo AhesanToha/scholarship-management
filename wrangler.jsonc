@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "scholarship-seat-desk",
+  "name": "scholarship-management",
   "main": "dist/server/index.js",
   "compatibility_date": "2026-10-13",
   "workers_dev": true,
