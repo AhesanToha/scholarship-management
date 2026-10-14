@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {api} from '../worker/api.js';
+import {appendAudit} from '../worker/audit.js';
+import {seed,ensureTokens} from '../src/lib/domain.js';
+import {registrationStatus,fromDhakaInput,toDhakaInput,possibleDuplicates,schoolProgress} from '../src/lib/operations.js';
+const objects=new Map();let revision=0,conflict=false;
+const BUCKET={async get(k){const o=objects.get(k);return o?{etag:o.etag,json:async()=>JSON.parse(o.value)}:null},async head(k){return objects.has(k)?{etag:objects.get(k).etag}:null},async put(k,value,options={}){const old=objects.get(k);if(conflict&&k==='scholarship/state.json'||options.onlyIf?.etagMatches&&old?.etag!==options.onlyIf.etagMatches||options.onlyIf?.etagDoesNotMatch==='*'&&old)return null;const etag=String(++revision);objects.set(k,{value,etag});return {etag}},async delete(k){objects.delete(k)}};
+const env={BUCKET,ADMIN_EMAIL:'owner@example.org'},owner={'oai-authenticated-user-id':'owner','oai-authenticated-user-email':'owner@example.org'};
+async function req(path,method='GET',payload,headers=owner){const response=await api(new Request('https://example.org'+path,{method,headers:{Origin:'https://example.org','Content-Type':'application/json',...headers},body:payload?JSON.stringify(payload):undefined}),env);return {status:response.status,response,data:await response.json()}}
+const initial=seed();ensureTokens(initial);await BUCKET.put('scholarship/state.json',JSON.stringify(initial));const read=async()=>(await req('/api/state')).data;
+async function settings(values){const snapshot=await read();Object.assign(snapshot.state.exam,values);const result=await req('/api/state','PUT',snapshot);assert.equal(result.status,200,JSON.stringify(result.data))}
+assert.equal(fromDhakaInput('2026-10-16T23:59'),'2026-10-16T17:59:00.000Z');assert.equal(toDhakaInput('2026-10-16T17:59:00.000Z'),'2026-10-16T23:59');assert.throws(()=>fromDhakaInput('2026-02-30T15:00'));assert(!registrationStatus({registrationDeadline:'2026-10-16T17:59:00.000Z'},Date.parse('2026-10-16T17:59:00Z')).open);
+const school=(await req('/api/schools','POST',{name:'Operations School',contactName:'Teacher',phone:'01711111111',username:'ops.school',password:'test-password'})).data.school;
+const login=await req('/api/school/'+school.id+'/login','POST',{username:school.username,password:'test-password'},{});const auth={Cookie:login.response.headers.get('Set-Cookie').split(';')[0]},path='/api/school/'+school.id;
+const sub=(await req(path+'/students','POST',{name:'Similar Student',fatherName:'Father Name',grade:'4',guardianPhone:'01722222222'},auth)).data.submission;
+await settings({registrationClosed:true});assert.equal((await req(path+'/students','POST',{name:'Late Student',fatherName:'Late Father',grade:'4'},auth)).status,409);
+assert.equal((await req(path+'/students/'+sub.id,'PUT',{name:'Similar Student',fatherName:'Father Name',grade:'4',guardianPhone:'01722222222'},auth)).status,200,'Corrections remain available');
+assert.equal((await req('/api/school-submissions/'+sub.id+'/review','POST',{action:'approved'})).status,200,'Admin approval remains available');
+await settings({registrationClosed:false,registrationDeadline:'2020-01-01T00:00:00.000Z'});assert.equal((await req(path+'/students','POST',{name:'Late Student',fatherName:'Late Father',grade:'4'},auth)).status,409);
+let portal=(await req(path+'/portal','GET',null,auth)).data;assert.equal(portal.registration.reason,'deadline');assert(portal.registration.serverNow);assert(!JSON.stringify(portal).includes('auditLog'));assert(!JSON.stringify(portal).includes('qrToken'));
+await settings({registrationDeadline:'2099-01-01T00:00:00.000Z'});
+const similar=await req(path+'/students','POST',{name:'Similar Student',fatherName:'Father Name',grade:'4',guardianPhone:'01822222222'},auth);assert.equal(similar.status,201);
+let state=(await read()).state;assert.equal(possibleDuplicates(state,similar.data.submission).length,1);assert.equal(schoolProgress(state,school).total,2);assert.equal(schoolProgress(state,school).approved,1);assert.equal(schoolProgress(state,school).pending,1);assert.equal(schoolProgress(state,school).missingPhoto,2);
+assert.equal((await req('/api/school-submissions/'+similar.data.submission.id+'/review','POST',{action:'approved'})).status,409);
+assert.equal((await req('/api/school-submissions/'+similar.data.submission.id+'/review','POST',{action:'approved',acknowledgeDuplicate:true,duplicateReason:'Confirmed separate student with matching names.'})).status,200);
+state=(await read()).state;assert.equal(schoolProgress(state,school).total,2,'Approved submission is not double counted');assert(state.auditLog.some(e=>e.actor.type==='school'&&e.actor.schoolId===school.id));assert(state.auditLog.some(e=>e.changes.registrationDeadline));assert(state.auditLog.some(e=>e.changes.duplicateReview));assert(!JSON.stringify(state.auditLog).includes('test-password'));
+const prior=await read(),history=structuredClone(prior.state.auditLog);prior.state.auditLog=[];prior.state.auditDropped=0;prior.state.exam.center='New centre';assert.equal((await req('/api/state','PUT',prior)).status,200);const current=await read();assert.deepEqual(current.state.auditLog.slice(0,history.length),history,'Client cannot erase server history');
+const count=current.state.auditLog.length;assert.equal((await req('/api/state','PUT',current)).status,200);assert.equal((await read()).state.auditLog.length,count,'No-op sync does not add history');
+conflict=true;const failed=await read();failed.state.exam.center='Should not persist';assert.equal((await req('/api/state','PUT',failed)).status,409);assert.equal((await read()).state.auditLog.length,count);conflict=false;
+assert.equal((await req('/api/state','GET',null,{})).status,403);const invalid=await read();invalid.state.exam.registrationClosed='false';assert.equal((await req('/api/state','PUT',invalid)).status,400);
+const oldAudit={exam:{name:'Previous'},students:[],rooms:[],auditLog:Array.from({length:3000},(_,i)=>({id:String(i)})),auditDropped:2};const nextAudit=structuredClone(oldAudit);nextAudit.exam.name='Changed';appendAudit(nextAudit,oldAudit);assert.equal(nextAudit.auditLog.length,3000);assert.equal(nextAudit.auditDropped,3);
+console.log('PASS: Dhaka deadline boundary, closure/reopening, preserved corrections/approval, server timing, progress deduplication, duplicate review acknowledgment, immutable atomic audit and owner isolation');
