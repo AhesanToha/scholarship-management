@@ -305,10 +305,10 @@ async function read(env) {
   state.schools ??= [];
   state.schoolSubmissions ??= [];
   state.schoolEditRequests ??= [];
-  return { object, state };
+  return { object: { etag: object.etag, previousState: structuredClone(state) }, state };
 }
 async function save(env, object, state, actor) {
-  appendAudit(state, await object.json(), actor);
+  appendAudit(state, object.previousState, actor);
   const result = await env.BUCKET.put(STATE, JSON.stringify(state), { httpMetadata: { contentType: "application/json" }, onlyIf: { etagMatches: object.etag } });
   if (!result) fail("Data has changed. Refresh and try again.", 409);
   return result;
