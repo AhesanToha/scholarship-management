@@ -8,3 +8,7 @@ site.tar.gz
 .cloud-export/
 .wrangler/
 .dev.vars
+
+dist/
+backups/
+worker/index.js
