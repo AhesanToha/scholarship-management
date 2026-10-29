@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-react.mjs && node scripts/build.mjs",
-    "check": "node tests/domain.mjs && node check-api.mjs && node tests/react.mjs && node tests/layout.mjs && node tests/schools.mjs && node tests/school-ui.mjs && node tests/strict-seats.mjs && node tests/new-features.mjs && node tests/admit-redesign.mjs && node tests/volunteer.mjs && node tests/volunteer-ui.mjs && node tests/appearance.mjs && node tests/admin-auth.mjs",
+    "check": "node tests/domain.mjs && node tests/model-v3.mjs && node check-api.mjs && node tests/react.mjs && node tests/layout.mjs && node tests/schools.mjs && node tests/school-ui.mjs && node tests/strict-seats.mjs && node tests/new-features.mjs && node tests/admit-redesign.mjs && node tests/volunteer.mjs && node tests/volunteer-ui.mjs && node tests/appearance.mjs && node tests/admin-auth.mjs",
     "start": "node scripts/build-react.mjs && node scripts/build.mjs && node scripts/dev-server.mjs",
     "check:local": "node tests/local-update.mjs",
     "export:cloud": "node scripts/export-cloud.mjs"

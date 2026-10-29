@@ -1,7 +1,8 @@
 import {assertChangedSeatRules} from './seat-rules.js';
+import {migrateState} from './schema.js';
 import {KEY,loadLocal,validateBackup,ensureTokens} from './domain.js';
 export function createExamStore({initial,fetcher=globalThis.fetch,persist=data=>localStorage.setItem(KEY,JSON.stringify(data))}={}){
- let state=initial||loadLocal();ensureTokens(state);let cloud={ready:false,testing:false,busy:false,dirty:false,blocked:false,message:"Connecting…",error:false},snapshot={state,cloud},listeners=new Set(),revision=null,timer=null,booted=false,syncPromise=null;
+ let state=initial||loadLocal();migrateState(state);ensureTokens(state);let cloud={ready:false,testing:false,busy:false,dirty:false,blocked:false,message:"Connecting…",error:false},snapshot={state,cloud},listeners=new Set(),revision=null,timer=null,booted=false,syncPromise=null;
  const emit=()=>{snapshot={state,cloud:{...cloud}};listeners.forEach(fn=>fn())};
  const status=(message,error=false)=>{cloud={...cloud,message,error};emit()};
  const saveLocal=()=>{try{persist(state)}catch{status("Unable to save in this browser. Download a backup.",true)}};
