@@ -4,12 +4,16 @@ import {validateShifts,DEFAULT_SHIFTS} from './shifts.js';
 import {seatTopology,pairConflict,seatConflicts} from './seat-rules.js';
 export const KEY='seat-desk-demo-v1';
 export const uid=()=>crypto.randomUUID();
-export const DEMO_SCHOOLS=['Aunushilon Academy','Grammer School','Kourok Biddapit'];
-export function demoStudents(){const names=['আরিফ','সুমাইয়া','রাফি','নুসরাত','আয়েশা','তানভীর','মেহজাবিন','সাদমান','ফারহান','তাসনিম','রায়হান','মাহিয়া','নাফিস','সামিয়া','ইমরান','ফারিয়া','আদনান','নাবিলা','সাকিব','জান্নাত'],surnames=['হাসান','ইসলাম','রহমান','আহমেদ','চৌধুরী'];return Array.from({length:100},(_,i)=>({id:uid(),name:names[i%20]+' '+surnames[Math.floor(i/20)],school:DEMO_SCHOOLS[i%3],grade:String(4+Math.floor(i/20)),roll:String(260401+i),present:false,seat:null,demoBatch:2}))}
+export const DEMO_SCHOOLS=['Aunushilon Academy','Grammer School'];
+// Demo students (mainly for testing / demo): 50 from Aunushilon Academy in
+// Class 6-8 (17 + 17 + 16) and 50 from Grammer School across Class 4-8
+// (10 per class). Total still 100, so Shift 1 (Class 4-5) has 20 students
+// and Shift 2 (Class 6-8) has 80.
+export function demoStudents(){const names=['আরিফ','সুমাইয়া','রাফি','নুসরাত','আয়েশা','তানভীর','মেহজাবিন','সাদমান','ফারহান','তাসনিম','রায়হান','মাহিয়া','নাফিস','সামিয়া','ইমরান','ফারিয়া','আদনান','নাবিলা','সাকিব','জান্নাত'],surnames=['হাসান','ইসলাম','রহমান','আহমেদ','চৌধুরী'];const plan=[];for(let i=0;i<50;i++)plan.push({school:'Aunushilon Academy',grade:String(6+Math.floor(i/17))});for(let i=0;i<50;i++)plan.push({school:'Grammer School',grade:String(4+Math.floor(i/10))});return plan.map(({school,grade},i)=>({id:uid(),name:names[i%20]+' '+surnames[Math.floor(i/20)],school,grade,roll:String(260401+i),present:false,seat:null,demoBatch:2}))}
 
 export function demoRoom(index){return {id:uid(),name:'D'+String(index).padStart(2,'0'),building:'Demo',floor:'নিচতলা',benches:10,per:2,columnBenches:[5,5],directions:'Demo ভবনের নিচতলায় রুম D'+String(index).padStart(2,'0')+'।',demoBatch:2}}
 
-export function seed(){return {demoVersion:2,exam:{name:'SCIENCE QUEST 2026',center:'নমুনা বিদ্যালয়',date:'2026-12-18',time:'10:00',locked:false,shifts:DEFAULT_SHIFTS.map(s=>({...s})),categories:[{id:'primary',name:'PRIMARY',from:4,to:5,shiftId:'shift-1'},{id:'junior',name:'JUNIOR',from:6,to:8,shiftId:'shift-2'}]},rooms:Array.from({length:5},(_,i)=>demoRoom(i+1)),students:demoStudents()}}
+export function seed(){return {demoVersion:3,exam:{name:'SCIENCE QUEST 2026',center:'নমুনা বিদ্যালয়',date:'2026-12-18',time:'10:00',locked:false,shifts:DEFAULT_SHIFTS.map(s=>({...s})),categories:[{id:'primary',name:'PRIMARY',from:4,to:5,shiftId:'shift-1'},{id:'junior',name:'JUNIOR',from:6,to:8,shiftId:'shift-2'}]},rooms:Array.from({length:5},(_,i)=>demoRoom(i+1)),students:demoStudents()}}
 
 export function parseCSV(text){let rows=[],row=[],v='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){v+='"';i++}else quoted=!quoted}else if(c===','&&!quoted){row.push(v);v=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(v);if(row.some(x=>x.trim()))rows.push(row);row=[];v=''}else v+=c}if(quoted)throw Error("Incomplete CSV quotation");row.push(v);if(row.some(x=>x.trim()))rows.push(row);return rows}
 
@@ -108,7 +112,9 @@ export function snapshot(state,s){const r=state.rooms.find(r=>r.id===s.seat?.roo
 export const capacity=state=>state.rooms.reduce((n,r)=>n+r.benches*r.per,0);
 export const schoolNames=state=>[...new Set(state.students.map(s=>s.school))].sort((a,b)=>a.localeCompare(b));
 export const gradeNames=state=>[...new Set(state.students.map(s=>normGrade(s.grade)))].sort((a,b)=>Number(a)-Number(b)||a.localeCompare(b));
-export function loadLocal(){let data;try{data=JSON.parse(localStorage.getItem(KEY));if(data)validateBackup(data)}catch{data=null}data=data||seed();if(data.demoVersion!==2){const incoming=demoStudents(),rolls=new Set(data.students.map(s=>s.roll));incoming.forEach(s=>{let roll=Number(s.roll);while(rolls.has(String(roll)))roll++;s.roll=String(roll);rolls.add(s.roll)});data.students.push(...incoming);let i=1;while(capacity(data)<data.students.length){const r=demoRoom(i++);if(!data.rooms.some(x=>x.name===r.name&&x.building===r.building))data.rooms.push(r)}data.demoVersion=2;data.exam.locked=false;data.demoUpgradeNotice=true}ensureTokens(data);return data}
+export function loadLocal(){let data;try{data=JSON.parse(localStorage.getItem(KEY));if(data)validateBackup(data)}catch{data=null}data=data||seed();if(data.demoVersion!==3){// Demo set changed (v3): replace the old demo students with the new
+ // set instead of adding on top — real (non-demo) students are untouched.
+ data.students=data.students.filter(s=>s.demoBatch!==2);const incoming=demoStudents(),rolls=new Set(data.students.map(s=>s.roll));incoming.forEach(s=>{let roll=Number(s.roll);while(rolls.has(String(roll)))roll++;s.roll=String(roll);rolls.add(s.roll)});data.students.push(...incoming);let i=1;while(capacity(data)<data.students.length){const r=demoRoom(i++);if(!data.rooms.some(x=>x.name===r.name&&x.building===r.building))data.rooms.push(r)}data.demoVersion=3;data.exam.locked=false;data.demoUpgradeNotice=true}ensureTokens(data);return data}
 export function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 export function filteredStudents(state,{search='',roll='',school='',grade='',status='',shift=''}={}){return state.students.filter(s=>(!roll||normGrade(s.roll)===normGrade(roll))&&(!school||s.school===school)&&(!grade||normGrade(s.grade)===grade)&&(!shift||shiftForStudent(s,state.exam)===shift)&&(!status||(status==='unassigned'?!s.seat:!!s.seat))&&[s.name,s.school,s.roll].some(v=>v.toLowerCase().includes(search.toLowerCase())))}
 export const seatUrl=(s,origin=location.origin)=>origin+'/#lookup='+s.qrToken;
