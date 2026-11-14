@@ -70,6 +70,38 @@ export function assertPlanBenchClasses(state,plan){const next=structuredClone(st
 
 export function applyAllocationPlan(state,plan){if(state.exam.locked)throw Error("Seating is locked.");if(plan.signature!==JSON.stringify(state))throw Error("Data has changed. Preview the allocation again.");assertPlanBenchClasses(state,plan);if(plan.rebuild)state.students.filter(s=>s.seat?.roomId===plan.roomId&&(!plan.shiftId||shiftForStudent(s,state.exam)===plan.shiftId)).forEach(s=>s.seat=null);plan.assignments.forEach(a=>state.students.find(s=>s.id===a.studentId).seat=a.seat);return plan.assignments.length}
 
+// Auto-allocate one shift across ALL rooms: fill rooms in order, each room
+// with its own strict-rule plan, on a working copy so later rooms only see
+// students still unassigned. Fill mode only — rebuild stays per-room, so a
+// single room can be rearranged without clearing the whole shift.
+export function buildMultiRoomAllocationPlan(state,config){
+ if(state.exam.locked)throw Error("Seating is locked. Unlock it first.");
+ if(!Array.isArray(config.grades)||new Set(config.grades.map(normGrade)).size<2)throw Error("Select at least two classes.");
+ const selected=config.studentIds?new Set(config.studentIds):null;
+ const candidates=allocationCandidates(state,{...config,rebuild:false}).filter(s=>!selected||selected.has(s.id));
+ if(!candidates.length)throw Error("No unassigned students match your selection.");
+ let remaining=new Set(candidates.map(s=>s.id));
+ const working=structuredClone(state),plans=[],skipped=[];
+ for(const room of state.rooms){
+  if(!remaining.size)break;
+  const used=working.students.filter(s=>s.seat?.roomId===room.id&&(!config.shiftId||shiftForStudent(s,working.exam)===config.shiftId)).length;
+  if(room.benches*room.per-used<=0){skipped.push({roomId:room.id,reason:'This room has no empty seats for this shift.'});continue}
+  try{
+   const plan=buildAllocationPlan(working,{...config,roomId:room.id,rebuild:false,studentIds:[...remaining]});
+   applyAllocationPlan(working,plan);
+   plans.push(plan);
+   remaining=new Set(plan.remaining);
+  }catch(err){skipped.push({roomId:room.id,reason:err.message})}
+ }
+ if(!plans.length)throw Error(skipped[0]?.reason||"Unable to assign seats within the separation rules. Select other schools, classes or a different room.");
+ return {multi:true,signature:JSON.stringify(state),plans,assignments:plans.flatMap(p=>p.assignments),remaining:[...remaining],candidateCount:candidates.length,shiftId:config.shiftId||null,skipped,rebuild:false,strict:true};
+}
+export function applyMultiRoomAllocationPlan(state,multi){
+ if(state.exam.locked)throw Error("Seating is locked.");
+ if(multi.signature!==JSON.stringify(state))throw Error("Data has changed. Preview the allocation again.");
+ let total=0;for(const plan of multi.plans)total+=applyAllocationPlan(state,plan);return total;
+}
+
 export function ensureTokens(state){const tokens=new Set();for(const student of state.students){if(typeof student.qrToken!=='string'||!/^[a-zA-Z0-9_-]{20,100}$/.test(student.qrToken)||tokens.has(student.qrToken))student.qrToken=uid();tokens.add(student.qrToken)}}
 
 export function snapshot(state,s){const r=state.rooms.find(r=>r.id===s.seat?.roomId);return {v:1,roll:s.roll,exam:state.exam,shift:shiftForStudent(s,state.exam),seat:s.seat,layout:r?{benches:r.benches,per:r.per,columns:mapColumns(r),columnBenches:columnCounts(r)}:null}}
