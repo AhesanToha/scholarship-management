@@ -101,5 +101,15 @@ const empty=document.querySelector('#available-candidates .empty').textContent;
 assert(empty.includes('Total unassigned: 80'),'empty state should show the real total');
 assert(empty.includes('Shift 2: 80'),'empty state should show where the students are');
 assert(empty.includes('Shift 1: 0'),'empty state should show the empty shift too');
+// The school filter must be named too: with Grammer School selected, no
+// Shift or Class change can reveal the students, so the heading and the
+// advice must say Schools as well.
+const grammer=[...document.querySelectorAll('#allocation-panel label')].find(l=>l.textContent.trim()==='Grammer School');
+await click(grammer.querySelector('input'));
+const heading2=document.querySelector('#available-candidates h3').textContent;
+assert(heading2.includes('Grammer School'),'heading should name the selected school');
+assert(heading2.includes('0 students'),'heading should still show 0 for Shift 1');
+const empty2=document.querySelector('#available-candidates .empty').textContent;
+assert(empty2.includes('Schools'),'empty-state advice should mention Schools when a school is selected');
 await act(async()=>{root2.unmount()});
 console.log('PASS: allocation UX — shift tabs with per-shift progress, allocation panel on top, selection kept with Next room, auto-allocate all rooms for a shift, honest unassigned counts');
