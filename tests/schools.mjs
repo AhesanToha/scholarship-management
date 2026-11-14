@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';import {api} from '../worker/api.js';import {seed,ensureTokens} from '../src/lib/domain.js';
 const objects=new Map();let revision=0,forceConflict=false;
-const BUCKET={async get(key){const o=objects.get(key);return o?{etag:o.etag,json:async()=>JSON.parse(o.value)}:null},async head(key){const o=objects.get(key);return o?{etag:o.etag}:null},async put(key,value,options={}){const o=objects.get(key);if(forceConflict&&key==='scholarship/state.json')return null;if(options.onlyIf?.etagMatches&&o?.etag!==options.onlyIf.etagMatches)return null;if(options.onlyIf?.etagDoesNotMatch==='*'&&o)return null;const etag=String(++revision);objects.set(key,{value,etag});return {etag}},async delete(key){objects.delete(key)}};
+const BUCKET={async get(key){const o=objects.get(key);if(!o)return null;let consumed=false;return {etag:o.etag,json:async()=>{if(consumed)throw new TypeError('Body already consumed');consumed=true;return JSON.parse(o.value)}}},async head(key){const o=objects.get(key);return o?{etag:o.etag}:null},async put(key,value,options={}){const o=objects.get(key);if(forceConflict&&key==='scholarship/state.json')return null;if(options.onlyIf?.etagMatches&&o?.etag!==options.onlyIf.etagMatches)return null;if(options.onlyIf?.etagDoesNotMatch==='*'&&o)return null;const etag=String(++revision);objects.set(key,{value,etag});return {etag}},async delete(key){objects.delete(key)}};
 const env={BUCKET,ADMIN_EMAIL:'owner@example.org'},owner={'oai-authenticated-user-id':'owner','oai-authenticated-user-email':'owner@example.org'};
 const data=seed();ensureTokens(data);await BUCKET.put('scholarship/state.json',JSON.stringify(data));const originals=data.students.map(s=>s.qrToken);
 async function request(path,method='GET',body,headers={}){const response=await api(new Request('https://example.org'+path,{method,headers:{Origin:'https://example.org','Content-Type':'application/json',...headers},body:body?JSON.stringify(body):undefined}),env);return {response,status:response.status,data:await response.json()}}
@@ -38,6 +38,8 @@ const stale=structuredClone(state.state);delete stale.schools;delete stale.schoo
 assert.equal((await request('/api/schools/'+id,'PATCH',{password:'reset-test-password'},owner)).status,200);assert.equal((await request('/api/school/'+id+'/portal','GET',null,schoolHeaders)).status,401);
 assert.equal((await request('/api/school/'+id+'/login','POST',{username:input.username,password:input.password})).status,401);
 const reset=await request('/api/school/'+id+'/login','POST',{username:input.username,password:'reset-test-password'});assert.equal(reset.status,200);const h2={Cookie:reset.response.headers.get('Set-Cookie').split(';')[0]};
+assert.equal((await request('/api/schools/'+id,'PATCH',{notice:'Important notice',noticeUrgent:true},owner)).status,200);
+const cleared=await request('/api/schools/'+id,'PATCH',{notice:'',noticeUrgent:false},owner);assert.equal(cleared.status,200);assert.equal(cleared.data.school.notice,'');assert.equal(cleared.data.school.noticeUrgent,false);
 assert.equal((await request('/api/schools/'+id,'PATCH',{active:false},owner)).status,200);assert.equal((await request('/api/school/'+id+'/portal','GET',null,h2)).status,401);
 assert.equal((await request('/api/schools/'+id,'PATCH',{active:true},owner)).status,200);
 assert.equal((await request('/api/school/'+id+'/logout','POST',{},h2)).status,200);assert.equal((await request('/api/school/'+id+'/portal','GET',null,h2)).status,401);

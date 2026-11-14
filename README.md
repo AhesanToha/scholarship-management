@@ -94,3 +94,69 @@ remain compatible. CSV templates now use `class`; old `grade` headers are accept
 See DEPLOY_CLOUDFLARE.md for a browser-based GitHub → Cloudflare Workers + R2
 setup, admin password configuration, live URLs and optional local-data migration.
 The live deployment has not been performed for you.
+
+## Registration and exam-day operations update
+
+- Settings → Registration controls: optional deadline in Bangladesh time
+  (UTC+06:00) and manual Close new registration switch. Save applies the controls.
+  Deadline closes new school POST registrations only; existing pending/returned
+  submissions and correction requests remain editable unless seating is locked.
+  Admin approvals and direct admin entries remain available. Defaults preserve
+  open registration for existing installations. Clear/extend an expired deadline
+  and turn off manual closure to reopen.
+- Each authenticated school portal displays an adaptive countdown and open/closed
+  status. The clock uses server time from its usual portal refresh, then ticks
+  locally. It does not add a network request each second. The server remains the
+  authority when submission and expiry happen together.
+- Schools → School registration progress: registered, approved, pending, returned,
+  missing photo and approval percentage. Linked approved applications are counted
+  once; unambiguously linked legacy students are included. Photo remains optional.
+- Student approval queue: possible-duplicate warnings compare school, class,
+  normalized student name and father's name. Existing exact-duplicate prevention
+  stays in place. A flagged approval requires acknowledgement and a reason of at
+  least five characters. A name match is not proof of identity.
+- History (`/history`): server-recorded changes to records, seating, exam settings,
+  school notices and approval/correction status. History is saved atomically with
+  the examination state. Client backups/saves cannot replace server history.
+  Latest 3,000 record changes are retained; download history regularly. Earlier
+  history is not reconstructed. Shared admin access is labelled as shared admin,
+  not as an individually identified person. Passwords and image bytes are not
+  logged. Individual records in a batch may produce separate history entries.
+- Rooms → Printable room lists (`/room-lists`): select all rooms or one room and
+  Door seat list or Attendance & signature sheet. Seat order is bench then position.
+  A4 portrait, 100% scale, browser headers/footers off. Room header and column
+  headers repeat as appropriate; each room starts on a new page. Unassigned
+  students are excluded with an explicit warning. The existing room-map print
+  option remains available. PDF output uses the browser's Save as PDF option.
+- School portals still have no admit-card download access. QR attendance and
+  offline lookup were not added.
+
+### Update the already-live deployment
+
+Stop the local server if it is running. Back up your project folder, replace the
+code with this ZIP and keep `.local-data` and `node_modules`. This package now
+uses Worker name `scholarship-management`, matching the live configuration, and
+the same R2 bucket `scholarship-seat-desk-data`.
+
+In CMD in the existing Git project folder, run one command at a time:
+
+```cmd
+git add src worker scripts tests package.json package-lock.json wrangler.jsonc README.md UPDATE_WINDOWS.txt
+git commit -m "Add registration deadline, progress, history and room lists"
+git push https://github.com/AhesanToha/scholarship-management.git main
+```
+
+Cloudflare rebuilds from the existing repository connection. Keep the same R2
+bucket and ADMIN_PASSWORD secret. Do not import an old backup, rerun migration,
+or initialize a new bucket for this update. Existing live school accounts,
+students, photos, rolls and QR tokens remain in the same R2 bucket.
+
+After success, hard-refresh admin and school browsers. Configure and save the
+actual registration deadline (none is automatically imposed), verify a school's
+countdown on a phone, then test closure and a pending application correction.
+Print one room sheet on the actual browser/printer before printing all rooms.
+
+Verification includes backend closure/reopening/approval, duplicate review,
+immutable audit/atomic conflict behavior, progress deduplication, deadline UI,
+history search and room-list print flow. Real cloud capacity and physical print
+layout still require a live/device check.

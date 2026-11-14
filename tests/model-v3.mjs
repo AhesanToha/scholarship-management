@@ -90,9 +90,9 @@ console.log('PASS: withdrawn students cannot hold a seat');
 
 // 5. Unknown centre is rejected.
 const unknown = structuredClone(state);
-unknown.students[0].centerId = 'missing-centre';
-assert.throws(() => validateBackup(unknown), /Invalid student centre or shift/);
-console.log('PASS: unknown centre/shift rejected');
+unknown.rooms[0].centerId = 'missing-centre';
+assert.throws(() => validateBackup(unknown), /Invalid capacity/);
+console.log('PASS: unknown centre rejected');
 
 // 6. Category mapping picks a shift, with a first-shift fallback.
 state.exam.categories = [

@@ -54,6 +54,10 @@ ensureTokens(data);
 const firstShift = data.exam.shifts[0].id;
 data.exam.centers.push({id: 'centre-two', name: 'Second Building', address: 'Road 2', code: 'C2'});
 data.exam.shifts.push({id: 'shift-afternoon', name: 'Afternoon', start: '14:00', reportBy: '13:30', duration: '1 Hour 20 Minutes', order: 2});
+data.exam.categories = [
+  {id: 'primary', name: 'PRIMARY', from: 4, to: 5, shiftId: firstShift},
+  {id: 'junior', name: 'JUNIOR', from: 6, to: 8, shiftId: 'shift-afternoon'},
+];
 data.rooms.push({id: 'room-two', name: '201', building: 'B', floor: '1', directions: 'Left', benches: 5, per: 2, columnBenches: [3, 2], centerId: 'centre-two'});
 await BUCKET.put('scholarship/state.json', JSON.stringify(data));
 
@@ -78,46 +82,36 @@ const added = await req('/api/school-admin/students', 'POST', {
 });
 assert.equal(added.status, 201, JSON.stringify(added.data));
 const addedStudent = added.data.students[0];
-assert.equal(addedStudent.centerId, 'centre-two');
+assert.equal(addedStudent.centerId, null);
 assert.equal(addedStudent.shiftId, 'shift-afternoon');
 
 await update((state) => {
   const student = state.students.find((s) => s.id === addedStudent.id);
+  student.centerId = 'centre-two';
   student.seat = {shiftId: 'shift-afternoon', centerId: 'centre-two', roomId: 'room-two', room: '201', building: 'B', floor: '1', directions: 'Left', bench: 1, position: 'A'};
 });
 
-const blocked = await req('/api/school-admin/students/' + addedStudent.id, 'PATCH', {
-  name: 'Shift Student',
-  fatherName: 'Shift Father',
-  schoolId: school.id,
-  grade: '6',
-  centerId: 'centre-two',
-  shiftId: firstShift,
-});
-assert.equal(blocked.status, 409, JSON.stringify(blocked.data));
-
-await update((state) => {
-  state.students.find((s) => s.id === addedStudent.id).seat = null;
-});
 const moved = await req('/api/school-admin/students/' + addedStudent.id, 'PATCH', {
   name: 'Shift Student',
   fatherName: 'Shift Father',
   schoolId: school.id,
-  grade: '6',
-  centerId: 'centre-two',
-  shiftId: firstShift,
+  grade: '5',
 });
 assert.equal(moved.status, 200, JSON.stringify(moved.data));
-assert.equal((await readState()).state.students.find((s) => s.id === addedStudent.id).shiftId, firstShift);
+const afterMove = (await readState()).state.students.find((s) => s.id === addedStudent.id);
+assert.equal(afterMove.shiftId, firstShift, 'class change re-derives the shift');
+assert.equal(afterMove.seat, null, 'seat is cleared when the shift changes');
+assert.equal(afterMove.centerId, null, 'centre is cleared with the seat');
 
 const login = await req('/api/school/' + school.id + '/login', 'POST', {username: 'centre.school', password: 'test-password'}, {});
 const cookie = login.response.headers.get('Set-Cookie').split(';')[0];
-const submission = await req('/api/school/' + school.id + '/students', 'POST', {name: 'Portal Shift', fatherName: 'Portal Father', grade: '7', shiftId: 'shift-afternoon'}, {Cookie: cookie});
+const submission = await req('/api/school/' + school.id + '/students', 'POST', {name: 'Portal Shift', fatherName: 'Portal Father', grade: '7'}, {Cookie: cookie});
 assert.equal(submission.status, 201, JSON.stringify(submission.data));
 assert.equal(submission.data.submission.shiftId, 'shift-afternoon');
 assert.equal((await req('/api/school-submissions/' + submission.data.submission.id + '/review', 'POST', {action: 'approved'})).status, 200);
 const approved = (await readState()).state.students.find((s) => s.name === 'Portal Shift');
 assert.equal(approved.shiftId, 'shift-afternoon');
-assert.equal(approved.centerId, school.centerId);
+assert.equal(approved.centerId, null);
+assert.equal(approved.seat, null);
 
-console.log('PASS: multiple centres/shifts, room centre validation, admin centre/shift, seat-change guard, school submission shift');
+console.log('PASS: multiple centres/shifts, room centre validation, dynamic shift from class, seat clearing, school submission shift');

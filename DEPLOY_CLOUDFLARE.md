@@ -66,7 +66,7 @@ this Worker to the old application's storage; Cloudflare uses `wrangler.jsonc`.
 
 | Setting | Value |
 | --- | --- |
-| Worker name | `scholarship-seat-desk` |
+| Worker name | `scholarship-management` |
 | Production branch | `main` |
 | Root directory | Repository root |
 | Build command | `npm run build` |

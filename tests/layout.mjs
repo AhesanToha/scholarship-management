@@ -11,7 +11,7 @@ for(const file of ['src/styles.css','src/scholarship.css']){
   function check(rules){for(const rule of rules){
     if(rule.media?.mediaText.includes('print'))continue;
     if(rule.cssRules){check(rule.cssRules);continue;}
-    if(!rule.selectorText)continue;
+    if(!rule.selectorText||rule.selectorText.startsWith('@'))continue;
     const selectors=rule.selectorText.split(',').filter(selector=>!selector.includes('::'));
     if(!selectors.some(selector=>main.matches(selector)))continue;
     for(let i=0;i<rule.style.length;i++){

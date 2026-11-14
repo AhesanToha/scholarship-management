@@ -112,7 +112,7 @@ export function migrateState(state) {
       const room = state.rooms.find((r) => r.id === student.seat.roomId);
       if (room?.centerId) student.centerId = room.centerId;
     }
-    if (!student.centerId) student.centerId = defaultCenter;
+    if (!student.centerId) student.centerId = student.seat ? defaultCenter : null;
     if (!student.shiftId) student.shiftId = defaultShift;
     if (!student.status) student.status = 'active';
     if (student.gender === undefined) student.gender = null;
@@ -121,11 +121,12 @@ export function migrateState(state) {
     if (student.presentAt === undefined) student.presentAt = null;
     if (student.presentBy === undefined) student.presentBy = null;
     if (student.seat) {
+      const room = state.rooms.find((r) => r.id === student.seat.roomId);
+      if (room?.centerId) student.centerId = room.centerId;
       if (!student.seat.shiftId) student.seat.shiftId = student.shiftId;
-      if (!student.seat.centerId) {
-        const room = state.rooms.find((r) => r.id === student.seat.roomId);
-        student.seat.centerId = room?.centerId || student.centerId;
-      }
+      if (!student.seat.centerId) student.seat.centerId = room?.centerId || student.centerId;
+    } else {
+      student.centerId = null;
     }
   }
 

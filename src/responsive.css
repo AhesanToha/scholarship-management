@@ -1,0 +1,95 @@
+/* Responsive and layout polish for centres, shifts, students and rooms. */
+.room-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 18px;
+}
+.room-filters {
+  background: #fff;
+  border: 1px solid #e7ecf2;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0 0 18px;
+}
+.room-filters > label {
+  flex: 1 1 220px;
+  min-width: 0;
+  margin: 0;
+}
+.form-note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.student-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: end;
+}
+.student-filters > label {
+  min-width: 0;
+}
+.student-filters .mantine-Button-root {
+  align-self: end;
+  height: 39px;
+}
+.table-wrap {
+  -webkit-overflow-scrolling: touch;
+}
+.seat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+@media (max-width: 767px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+  .room-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .room-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .room-filters > label {
+    flex: 1 1 auto;
+  }
+  .student-filters {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .student-filters .mantine-Button-root {
+    grid-column: 1 / -1;
+  }
+  .table-wrap table {
+    min-width: 680px;
+  }
+  .panel {
+    padding: 18px;
+  }
+  .room-dashboard-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .room-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .room-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .room-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-filters {
+    grid-template-columns: 1fr;
+  }
+  .table-wrap table {
+    min-width: 620px;
+  }
+}

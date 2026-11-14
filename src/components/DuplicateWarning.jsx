@@ -1,0 +1,4 @@
+import React from 'react';
+import {Alert,Text,Checkbox,TextInput} from '@mantine/core';
+import {possibleDuplicates} from '../lib/operations.js';
+export default function DuplicateWarning({state,student,approval=false}){const matches=possibleDuplicates(state,student);if(!matches.length)return null;return <Alert color="orange" title="Possible duplicate" mb="md"><Text size="sm">Name, father's name, class and school match another active record. This is a warning, not proof that they are the same person.</Text>{matches.slice(0,5).map(s=><Text size="xs" mt="xs" key={s.id}>{s.name} · Class {s.grade} · {s.roll||s.status}</Text>)}{approval&&<><Checkbox mt="md" name="acknowledgeDuplicate" label="I checked these records and confirm this is a different student" required/><TextInput mt="sm" label="Reason for approving despite the match" name="duplicateReason" required minLength={5} maxLength={500}/></>}</Alert>}

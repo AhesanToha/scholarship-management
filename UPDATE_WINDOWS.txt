@@ -28,3 +28,14 @@ Latest update:
 - School submissions require student name, father's name and class.
 - Tap the 3:4 photo preview to upload a photo.
 - Cloudflare deployment guide: DEPLOY_CLOUDFLARE.md.
+
+Registration & exam operations update:
+- Settings: Registration controls, Bangladesh-time deadline and manual closure.
+- School portal: sleek countdown and registration open/closed state.
+- Schools: per-school progress and possible-duplicate approval warning.
+- History: server-recorded changes from this update onward (latest 3,000 retained).
+- Rooms: Door seat list or Attendance & signature sheet, one room/all rooms.
+- School admit-card access and QR attendance are not enabled.
+
+Existing live installation: replace code, git add/commit/push as explained in
+README.md. Keep the same Worker, R2 bucket and secret. DO NOT rerun migration.
