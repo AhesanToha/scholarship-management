@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';import {build} from 'esbuild';
-import {seed,ensureTokens,buildMultiRoomAllocationPlan,applyMultiRoomAllocationPlan,validateBackup} from '../src/lib/domain.js';
+import {seed,ensureTokens,allocationCandidates,buildMultiRoomAllocationPlan,applyMultiRoomAllocationPlan,validateBackup} from '../src/lib/domain.js';
 import {seatConflicts} from '../src/lib/seat-rules.js';
 import {shiftForStudent} from '../src/lib/categories.js';
 import {createExamStore} from '../src/lib/store.js';
@@ -29,6 +29,12 @@ const changed=seed();changed.students[0].name='Changed';
 assert.throws(()=>applyMultiRoomAllocationPlan(changed,stale),/Data has changed/);
 // Fill mode only: no candidates left -> clear error, not a silent empty plan.
 assert.throws(()=>buildMultiRoomAllocationPlan(state,{shiftId:'shift-1',grades:['4','5']}),/No unassigned students/);
+// Candidates are per-shift/per-class: a Shift-2-only student set has no
+// Shift 1 candidates, even though 80 students are unassigned in total.
+// The panel must say which shift/class the 0 belongs to (see UI test 3).
+const onlyShift2=seed();onlyShift2.students=onlyShift2.students.filter(s=>['6','7','8'].includes(s.grade));
+assert.equal(allocationCandidates(onlyShift2,{shiftId:'shift-1',grades:['4','5']}).length,0);
+assert.equal(onlyShift2.students.filter(s=>!s.seat).length,80);
 
 // 2. UI: shift tabs on top, allocation panel above the room cards,
 // single-room apply keeps the selection and offers the next room,
@@ -80,4 +86,20 @@ await click(tabs[0]);
 assert.equal(selects[0].value,'shift-1','expected the allocation shift to follow the tab');
 assert(document.querySelector('.room-summary-card').textContent.includes('Empty'),'expected room cards to show the Shift 1 (empty) state');
 await act(async()=>{root.unmount()});
-console.log('PASS: allocation UX — shift tabs with per-shift progress, allocation panel on top, selection kept with Next room, auto-allocate all rooms for a shift');
+// 3. Count honesty: with only Shift 2 students in the data, the Shift 1
+// heading must still name its shift and classes, and the empty state must
+// show where the unassigned students actually are — never a bare "0".
+const shift2Only=seed();shift2Only.students=shift2Only.students.filter(s=>['6','7','8'].includes(s.grade));ensureTokens(shift2Only);let revision2='1';
+const fetcher2=async(path,options={})=>{if(path==='/api/me')return {json:async()=>({owner:true,testing:true,configured:true})};if(options.method==='PUT'){const body=JSON.parse(options.body);shift2Only=body.state;revision2=String(Number(revision2)+1);return {ok:true,json:async()=>({revision:revision2})}}return {ok:true,json:async()=>({state:structuredClone(shift2Only),revision:revision2})}};
+globalThis.fetch=fetcher2;const store2=createExamStore({initial:structuredClone(shift2Only),fetcher:fetcher2,persist(){}});const root2=createRoot(document.getElementById('root'));
+await act(async()=>{root2.render(React.createElement(App,{store:store2}));await pause();await pause()});
+const heading=document.querySelector('#available-candidates h3').textContent;
+assert(heading.includes('Shift 1'),'heading should name the shift');
+assert(heading.includes('Class 4, 5'),'heading should name the selected classes');
+assert(heading.includes('0 students'),'heading should show 0 for Shift 1');
+const empty=document.querySelector('#available-candidates .empty').textContent;
+assert(empty.includes('Total unassigned: 80'),'empty state should show the real total');
+assert(empty.includes('Shift 2: 80'),'empty state should show where the students are');
+assert(empty.includes('Shift 1: 0'),'empty state should show the empty shift too');
+await act(async()=>{root2.unmount()});
+console.log('PASS: allocation UX — shift tabs with per-shift progress, allocation panel on top, selection kept with Next room, auto-allocate all rooms for a shift, honest unassigned counts');
