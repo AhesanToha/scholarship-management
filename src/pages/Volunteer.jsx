@@ -11,7 +11,7 @@ const timeOf=iso=>{try{return new Date(iso).toLocaleTimeString('en-GB',{hour:'2-
 
 export default function Volunteer(){
  const [roll,setRoll]=useState(''),[result,setResult]=useState(null),[source,setSource]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[scanning,setScanning]=useState(false),[query,setQuery]=useState(null),[updated,setUpdated]=useState('');
- const [pack,setPack]=useState(null),[packBusy,setPackBusy]=useState(false),[packError,setPackError]=useState(''),[packNotice,setPackNotice]=useState(''),[stale,setStale]=useState(false),[online,setOnline]=useState(()=>typeof navigator==='undefined'||navigator.onLine!==false);
+ const [pack,setPack]=useState(null),[packBusy,setPackBusy]=useState(false),[packError,setPackError]=useState(''),[packNotice,setPackNotice]=useState(''),[stale,setStale]=useState(false),[online,setOnline]=useState(()=>typeof navigator==='undefined'||navigator.onLine!==false),[swReady,setSwReady]=useState(false);
  const active=useRef(null),input=useRef(null),packRef=useRef(null);
  useEffect(()=>()=>active.current?.abort(),[]);
  // Load any saved offline pack. If one exists and we are online, check
@@ -29,6 +29,20 @@ export default function Volunteer(){
   const onOnline=()=>setOnline(true),onOffline=()=>setOnline(false);
   window.addEventListener('online',onOnline);window.addEventListener('offline',onOffline);
   return ()=>{alive=false;window.removeEventListener('online',onOnline);window.removeEventListener('offline',onOffline)};
+ },[]);
+ // Is the page shell itself saved on this phone (service worker active)?
+ // Without it the page cannot even open offline, however good the pack is.
+ useEffect(()=>{
+  if(typeof navigator==='undefined'||!('serviceWorker' in navigator)||!navigator.serviceWorker.getRegistration)return;
+  let alive=true;
+  // On a first visit the worker is still installing, so r.active is null
+  // on the first check — re-check after a delay and when the worker
+  // takes control, so the "saved" line confirms without a reload.
+  const check=()=>navigator.serviceWorker.getRegistration().then(r=>{if(alive&&r&&r.active)setSwReady(true)}).catch(()=>{});
+  check();
+  const retry=setTimeout(check,3000);
+  navigator.serviceWorker.addEventListener?.('controllerchange',check);
+  return ()=>{alive=false;clearTimeout(retry);navigator.serviceWorker.removeEventListener?.('controllerchange',check)};
  },[]);
  async function lookupOffline(next){
   const saved=packRef.current||await loadPack();
@@ -93,6 +107,7 @@ export default function Volunteer(){
    {scanning&&<QRScanner onScan={token=>lookup({token})} onClose={()=>setScanning(false)}/>}
    <div className="offline-pack" style={{marginTop:18}}>
     {pack?<Text size="sm">Offline ready • {pack.totalCount} students • Synced: {timeOf(pack.downloadedAt)} • v{pack.version.slice(0,8)}</Text>:<Text size="sm" c="dimmed">No offline pack on this phone yet. Download it while online, after seating is locked — then roll and QR lookup keep working without internet.</Text>}
+    {swReady?<Text size="sm" c="teal">This page is saved on this phone — it opens even with no internet.</Text>:<Text size="sm" c="dimmed">Open this page once while online and it will be saved on this phone for offline use.</Text>}
     <Group mt="xs"><Button variant="light" size="sm" loading={packBusy} leftSection={<IconDownload size={16}/>} onClick={downloadPack}>Download offline pack</Button>{pack&&<Button variant="subtle" size="sm" onClick={clearOffline}>Clear offline pack</Button>}</Group>
     {packNotice&&<Text size="sm" c="teal" mt="xs">{packNotice}</Text>}
     {packError&&<Text size="sm" c="red" mt="xs">{packError}</Text>}

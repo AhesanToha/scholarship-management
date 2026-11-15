@@ -99,3 +99,23 @@ A + B + C sob kora hoyeche, D (map preview highlight) baki:
   add kora hoyeche. `npm run build` PASS, `npm run check` exit 0 — sob test PASS.
 - Live-e pathate Windows theke ager motoi commit + `HEAD:main` push korte
   hobe (folder-ta `feat/exam-day` branch-e ache).
+
+## Modal wizard (2026-11-15) — inline panel soriye deya holo
+
+User bollo ager flow-tao "hijibiji" — tai allocation ekhon modal wizard:
+- Room card-er Allocate button, selected room-er "Allocate this room", ba
+  tab-er nicher "Auto-fill all rooms" button — sobai ekoi wizard khole.
+- Wizard-e 3 step: 1 Setup (shift / mode / class / school / student) →
+  2 Preview → 3 Done. Confirm-er pore "Next room →" dile porer room-er
+  wizard khole, aager shift/class/school mone rakha thake.
+- Wizard bondho kore abar khulleo aager shift-er class/school mone thake
+  (Rooms.jsx-er `lastAlloc`); shift bodle gele fresh default ase, karon
+  class shift-er sathe jukto.
+- `?allocate=1` deep link ekhono wizard khole. Locked thakle Preview
+  disabled thake, ager motoi.
+- `src/components/Allocation.jsx` muche deya hoyeche; bodle
+  `src/components/AllocationWizard.jsx`. `src/pages/Rooms.jsx` theke inline
+  panel + scroll effect sorano hoyeche. Selection/count logic (honest
+  unassigned counts soho) oporibortito — test: `tests/allocation-ux.mjs`
+  §2–3 modal flow-er jonno notun kore lekha, `tests/react.mjs`-o update.
+- Map preview highlight (agekar plan item D) ekhono baki.
