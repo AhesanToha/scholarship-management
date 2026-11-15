@@ -119,3 +119,62 @@ User bollo ager flow-tao "hijibiji" — tai allocation ekhon modal wizard:
   unassigned counts soho) oporibortito — test: `tests/allocation-ux.mjs`
   §2–3 modal flow-er jonno notun kore lekha, `tests/react.mjs`-o update.
 - Map preview highlight (agekar plan item D) ekhono baki.
+
+## Update 2026-11-15 — Allocate button clarity (reviewer defect fixed)
+
+User feedback: after the modal wizard, the Allocate button was not clearly
+understandable. Cause: a tiny 12px secondary "Allocate" squeezed into the
+card footer line with the layout info and "View room →".
+
+Fix (commit 3dac3b2 + reviewer fix):
+- Room card: full-width primary button at the card bottom, "Allocate seats ·
+  N free"; full room in the active shift shows secondary "Rebuild seats".
+  Footer line now only shows layout info + "View room →" / "Selected ✓".
+  Card is flex column; the meta row has margin-top:auto so buttons align
+  across the grid row. Button is 44px tall, 14px label.
+- Auto-fill toolbar button shows the waiting count: "Auto-fill all rooms ·
+  N student(s) waiting" / "no students waiting" (still clickable, opens
+  the honest empty state).
+- Selected-room panel button: "Allocate seats · N free" / "Rebuild seats".
+- Reviewer defect: "Rebuild seats" opened the wizard in fill mode — a dead
+  end ("This room has no empty seats" at Preview). Fixed by threading a
+  rebuild flag through the wizard state (Rooms setWizard({roomId, rebuild}),
+  AllocationWizard initialRebuild prop, multi stays fill-only, Next room
+  resets rebuild:false — nextRoomId only ever points at rooms with free
+  seats). Test asserts the wizard opens with the mode select on "yes".
+- Reviewer optional ideas (not done): disable Allocate entry points while
+  seating is locked; button-inside-Link cleanup; wizard "Switch to Rebuild"
+  action next to the no-empty-seats error.
+
+## Update 2026-11-15 — next-stage UX: dead-ends closed + preview seat map
+
+User chose BOTH next-stage improvements (lock dead-ends + preview map).
+Fixed in the same round (user report): the Students page Add form was
+always open above the list — now behind a "+ Add student" button opening
+a modal, the same pattern as the school portal registration form
+(commit 44f534d).
+
+1. Locked state (commit 02b9ae8): while seating is locked, every Allocate
+   entry point is disabled and labelled "Seating locked" — 5 room-card
+   buttons, auto-fill, selected-room panel button. Unlocking restores them.
+2. Switch to Rebuild: when the wizard fails in fill mode with "This room
+   has no empty seats.", "Existing assignments have school or class
+   conflicts. Select Rebuild this room.", or "No unassigned students match
+   your selection." (and the room has students in this shift), a
+   "Switch to Rebuild this room" button appears next to the error — one
+   click flips to rebuild mode and previews the new arrangement.
+   (Found by test: with no unassigned students in the shift, fill mode
+   fails with "No unassigned students" before it ever reaches the
+   empty-seats check — the switch covers that message too. A domain test
+   covers the "no empty seats" throw directly.)
+3. Button-in-Link cleanup: the room card is a plain container now; the
+   card info is a Link inside it and the Allocate button is its sibling —
+   no nested interactive elements. Tests updated to
+   `.room-summary-card a[href=...]`.
+4. Preview seat map (plan item D, done): the single-room Preview step
+   shows the room BenchMap — amber seats are the new assignments, green
+   seats are already assigned (fill mode); in rebuild mode the map shows
+   only the new arrangement. Multi-room preview keeps the per-room tables
+   (no maps — too heavy for 5 rooms).
+Tests: allocation-ux §5 (switch + map + locked), §2 map assertion,
+domain "no empty seats" throw. Full build + check PASS (26 suites).
