@@ -1,5 +1,6 @@
 import {validateRegistration} from './operations.js';
 import {validateCategories,shiftForStudent} from './categories.js';
+import {studentErrors,normalizedSchoolName,normalizeText,normalizedDigits,legacySchoolMatch} from './form-validation.js';
 import {validateShifts,DEFAULT_SHIFTS} from './shifts.js';
 import {seatTopology,pairConflict,seatConflicts} from './seat-rules.js';
 export const KEY='seat-desk-demo-v1';
@@ -17,6 +18,37 @@ export function seed(){return {demoVersion:3,exam:{name:'SCIENCE QUEST 2026',cen
 
 export function parseCSV(text){let rows=[],row=[],v='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){v+='"';i++}else quoted=!quoted}else if(c===','&&!quoted){row.push(v);v=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(v);if(row.some(x=>x.trim()))rows.push(row);row=[];v=''}else v+=c}if(quoted)throw Error("Incomplete CSV quotation");row.push(v);if(row.some(x=>x.trim()))rows.push(row);return rows}
 
+// CSV import preview: what a file would import, before anything is sent.
+// Valid rows are grouped by school (with a class and shift breakdown);
+// problem rows are listed with the reason, so the user confirms exactly
+// what will happen — no silent import, and no surprise server rejection.
+export function buildCsvImportPreview(state,rows){
+  const header=rows[0]?.map(v=>v.trim()).join(',');
+  const headers=['name,school,class','name,school,class,roll','name,school,grade','name,school,grade,roll'];
+  if(!headers.includes(header))return {headerError:'CSV headers must be name,school,grade.',totalRows:0,valid:[],problems:[],groups:[],overLimit:false};
+  const columns=header.endsWith(',roll')?4:3,activeSchools=(state.schools||[]).filter(s=>s.active);
+  const existing=[...(state.students||[]),...(state.schoolSubmissions||[]).filter(s=>s.status!=='rejected')];
+  const valid=[],problems=[],seen=new Set();
+  for(let i=1;i<rows.length;i++){
+    const row=rows[i],n=i+1;
+    if(row.length!==columns){problems.push({row:n,reason:'Row is incomplete.'});continue}
+    const [name,school,grade]=row.map(v=>v.trim());
+    const matches=activeSchools.filter(s=>normalizedSchoolName(s.name)===normalizedSchoolName(school));
+    if(matches.length!==1){problems.push({row:n,reason:matches.length?`"${school}" matches more than one registered school.`:`"${school}" is not a registered active school. Register it on the Schools page first.`});continue}
+    const data={name,schoolId:matches[0].id,grade},invalid=studentErrors(data,{schoolRequired:true,exam:state.exam});
+    if(Object.keys(invalid).length){problems.push({row:n,reason:Object.values(invalid).join(' ')});continue}
+    const key=matches[0].id+'|'+normalizedDigits(String(grade))+'|'+normalizedSchoolName(name);
+    if(seen.has(key)){problems.push({row:n,reason:'This student appears twice in this file.'});continue}
+    seen.add(key);
+    // Same duplicate rule as the server: same grade + name + school, with
+    // empty father name and guardian phone (a CSV row carries neither).
+    const duplicate=existing.some(s=>s.grade===normalizedDigits(String(grade))&&normalizedSchoolName(s.name)===normalizedSchoolName(name)&&normalizeText(s.fatherName)===''&&normalizedDigits(s.guardianPhone)===''&&(s.schoolId===matches[0].id||legacySchoolMatch(state,s,matches[0])));
+    if(duplicate){problems.push({row:n,reason:'This student already exists in this school.'});continue}
+    valid.push({row:n,name,schoolId:matches[0].id,schoolName:matches[0].name,grade:normalizedDigits(String(grade))});
+  }
+  const groups=[];for(const v of valid){let g=groups.find(g=>g.schoolId===v.schoolId);if(!g){g={schoolId:v.schoolId,schoolName:v.schoolName,count:0,grades:{},shifts:{}};groups.push(g)}g.count++;g.grades[v.grade]=(g.grades[v.grade]||0)+1;const sid=shiftForStudent({grade:v.grade},state.exam);g.shifts[sid]=(g.shifts[sid]||0)+1}
+  return {headerError:'',totalRows:rows.length-1,valid,problems,groups,overLimit:valid.length>500};
+}
 export function validateBackup(d){validateRegistration(d?.exam||{});validateShifts(d?.exam||{});validateCategories(d?.exam||{});if(!d||!d.exam||!Array.isArray(d.rooms)||!Array.isArray(d.students))throw Error("Invalid format");for(const k of ['name','center','date','time'])if(typeof d.exam[k]!=='string')throw Error("Invalid exam");const ids=new Set(),rolls=new Set();for(const r of d.rooms){for(const k of ['id','name','building','floor','directions'])if(typeof r[k]!=='string')throw Error("Invalid room");if(ids.has(r.id)||!Number.isInteger(r.benches)||r.benches<1||r.benches>200||!Number.isInteger(r.per)||r.per<1||r.per>4)throw Error("Invalid capacity");if(r.columnBenches!==undefined&&!validCounts(r.columnBenches,r.benches))throw Error("Invalid column layout");ids.add(r.id)}const seats=new Set(),studentIds=new Set();for(const s of d.students){for(const k of ['id','name','school','grade','roll'])if(typeof s[k]!=='string'||!s[k].trim())throw Error("Invalid student");if(rolls.has(normGrade(s.roll))||studentIds.has(s.id))throw Error('Duplicate student');rolls.add(normGrade(s.roll));studentIds.add(s.id);if(s.shiftId!==undefined&&typeof s.shiftId!=='string')throw Error("Invalid shift");if(s.seat){const r=d.rooms.find(r=>r.id===s.seat.roomId);if(!r||!Number.isInteger(s.seat.bench)||s.seat.bench<1||s.seat.bench>r.benches||!'ABCD'.slice(0,r.per).includes(s.seat.position)||s.seat.position.length!==1)throw Error("Invalid seat");const key=r.id+':'+s.seat.bench+':'+s.seat.position+':'+shiftForStudent(s,d.exam);if(seats.has(key))throw Error('Duplicate seat');seats.add(key);for(const k of ['room','building','floor','directions'])if(typeof s.seat[k]!=='string')throw Error("Invalid seat data")}}d.exam.locked=!!d.exam.locked}
 
 export function validCounts(counts,total){return Array.isArray(counts)&&counts.length>=1&&counts.length<=6&&counts.every(n=>Number.isInteger(n)&&n>=1&&n<=200)&&counts.reduce((a,b)=>a+b,0)===total}
