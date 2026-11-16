@@ -105,10 +105,10 @@ export default function Volunteer(){
     <Button type="submit" size="md" loading={busy} disabled={scanning} leftSection={<IconSearch size={18}/>}>Find seat</Button>
    </form>
    {scanning&&<QRScanner onScan={token=>lookup({token})} onClose={()=>setScanning(false)}/>}
-   <div className="offline-pack" style={{marginTop:18}}>
+   <div className="offline-pack"><Text size="xs" fw={700} tt="uppercase" c="dimmed" style={{letterSpacing:1}} mb="sm">Offline pack</Text>
     {pack?<Text size="sm">Offline ready • {pack.totalCount} students • Synced: {timeOf(pack.downloadedAt)} • v{pack.version.slice(0,8)}</Text>:<Text size="sm" c="dimmed">No offline pack on this phone yet. Download it while online, after seating is locked — then roll and QR lookup keep working without internet.</Text>}
     {swReady?<Text size="sm" c="teal">This page is saved on this phone — it opens even with no internet.</Text>:<Text size="sm" c="dimmed">Open this page once while online and it will be saved on this phone for offline use.</Text>}
-    <Group mt="xs"><Button variant="light" size="sm" loading={packBusy} leftSection={<IconDownload size={16}/>} onClick={downloadPack}>Download offline pack</Button>{pack&&<Button variant="subtle" size="sm" onClick={clearOffline}>Clear offline pack</Button>}</Group>
+    <Group mt="xs" wrap="wrap"><Button variant="light" size="sm" loading={packBusy} leftSection={<IconDownload size={16}/>} onClick={downloadPack}>Download offline pack</Button>{pack&&<Button variant="subtle" size="sm" onClick={clearOffline}>Clear offline pack</Button>}</Group>
     {packNotice&&<Text size="sm" c="teal" mt="xs">{packNotice}</Text>}
     {packError&&<Text size="sm" c="red" mt="xs">{packError}</Text>}
    </div>

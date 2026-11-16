@@ -110,3 +110,147 @@ textarea{width:100%;padding:12px 14px;font:inherit;line-height:1.6;border:1px so
 .map-seat.planned small,.map-seat.planned .map-class{color:#7a5b00}
 [data-mantine-color-scheme="dark"] .map-seat.planned{background:#4a3a10;border-color:#a8842a;color:#f5d67a}
 [data-mantine-color-scheme="dark"] .map-seat.planned small,[data-mantine-color-scheme="dark"] .map-seat.planned .map-class{color:#f5d67a}
+
+/* ================= Design system · 2026-11-16 =================
+   One visual language for every page: deep teal accent, ink text,
+   soft surfaces, 16px cards, quiet shadows. Every new rule below has
+   a dark-mode value in the dark block at the end of this section. */
+:root{--desk-bg:#f2f5f7;--desk-surface:#ffffff;--desk-text:#14293a;--desk-muted:#5d7284;--desk-border:#e2e8ee;--desk-soft:#eef3f6;--desk-accent:#087b5f;--desk-accent-strong:#0a6b52;--desk-accent-soft:#e6f4ee;--desk-accent-ink:#0b5c46;--desk-amber:#8a5f0b;--desk-amber-soft:#fdf3dc;--desk-amber-border:#ecd9a6;--desk-amber-line:#d9a514;--desk-red:#b3372c;--desk-red-soft:#fdecea;--desk-blue:#2b5ea7;--desk-blue-soft:#e9f1fb;--desk-violet:#6d4fa3;--desk-violet-soft:#f1ebfa;--desk-shadow:0 1px 2px rgba(16,42,51,.05),0 8px 24px rgba(16,42,51,.05);--desk-shadow-hover:0 2px 6px rgba(16,42,51,.06),0 16px 34px rgba(16,42,51,.10);--desk-radius:16px;--desk-radius-sm:12px}
+body{background:var(--desk-bg)}
+/* One teal focus ring for every interactive element. */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid #40c49f;outline-offset:2px;border-radius:6px}
+/* App shell: deep ink sidebar, calmer page header. */
+.scholar-sidebar{background:linear-gradient(180deg,#0e2a33 0%,#0b222b 100%);color:#d5e5e8;border-right:0}
+.scholar-sidebar a{color:#a8bfc6}
+.scholar-sidebar a:hover{background:rgba(255,255,255,.06);color:#eaf4f6}
+.scholar-sidebar a[data-active]{background:rgba(88,203,174,.16);color:#8fe3c8;box-shadow:inset 3px 0 #58cbae}
+.sidebar-brand .mantine-Text-root:first-child{color:#f4fafc!important}
+.sidebar-brand .mantine-Text-root:last-child{color:#9db8bf!important}
+.sidebar-note{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important}
+.sidebar-note .mantine-Text-root{color:#d5e5e8}
+.page-intro h1{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.page-intro .mantine-Text-root{font-size:14px}
+.page-intro .mantine-Badge-root{border-radius:99px}
+/* Cards: the shared surface. */
+.panel{background:var(--desk-surface);border-color:var(--desk-border);border-radius:var(--desk-radius);box-shadow:var(--desk-shadow)}
+.panel h2{font-size:18px;font-weight:750;letter-spacing:-.2px}
+/* Section header: title + supporting text + actions, one pattern everywhere. */
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.section-head h2{margin:0;font-size:18px;font-weight:750;letter-spacing:-.2px}
+.section-head p{margin:4px 0 0;color:var(--desk-muted);font-size:13px}
+.section-head .section-actions{display:flex;gap:8px;flex-wrap:wrap}
+/* Metric cards: tinted icon chip, big tabular number, context line, thin bar. */
+.metric-card{padding:20px 22px!important;border-radius:var(--desk-radius)!important;border-color:var(--desk-border)!important;box-shadow:var(--desk-shadow);transition:transform .15s,box-shadow .15s}
+.metric-card:hover{transform:translateY(-2px);box-shadow:var(--desk-shadow-hover)}
+.metric-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.metric-label{font-size:13px;font-weight:600;color:var(--desk-muted)}
+.metric-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex-shrink:0}
+.metric-icon.tint-teal{background:var(--desk-accent-soft);color:var(--desk-accent-ink)}
+.metric-icon.tint-blue{background:var(--desk-blue-soft);color:var(--desk-blue)}
+.metric-icon.tint-violet{background:var(--desk-violet-soft);color:var(--desk-violet)}
+.metric-icon.tint-amber{background:var(--desk-amber-soft);color:var(--desk-amber)}
+.metric-number{font-size:36px!important}
+.metric-context{font-size:13px;color:var(--desk-muted);margin-top:2px}
+.metric-bar{height:6px;border-radius:99px;background:#e6edf1;margin-top:14px;overflow:hidden}
+.metric-bar>span{display:block;height:100%;background:var(--desk-accent);border-radius:99px}
+.metric-bar>span.amber{background:var(--desk-amber-line)}
+/* Attention card (amber) and next-action card (teal gradient). */
+.attention-card{background:linear-gradient(115deg,#fff7df,#fffdf3);border:1px solid var(--desk-amber-border);border-left:5px solid var(--desk-amber-line);border-radius:var(--desk-radius);padding:20px 22px;box-shadow:var(--desk-shadow)}
+.attention-card .attention-title{font-size:16px;font-weight:750;color:#5c430a}
+.attention-card p{color:#6d5a2e}
+.next-action-card{background:linear-gradient(120deg,#0a6b52,#087b5f 60%,#0a7d68);color:#fff;border:0;border-radius:18px;padding:26px;box-shadow:0 12px 32px rgba(8,123,95,.28)}
+.next-action-card h2{color:#fff;font-size:20px;margin:0}
+.next-action-card p{color:rgba(255,255,255,.8)}
+.next-action-card .mantine-Button-root[data-variant=filled]{background:#fff;color:#0a6b52;box-shadow:none}
+.next-action-card .mantine-Button-root[data-variant=light]{background:rgba(255,255,255,.16);color:#fff}
+.next-action-card .mantine-Button-root[data-variant=default]{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
+/* Per-shift progress rows (dashboard seating progress). */
+.shift-row{padding:14px 0;border-top:1px solid var(--desk-border)}
+.shift-row:first-of-type{border-top:0;padding-top:4px}
+.shift-row-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.shift-row-head b{font-size:14px}
+.shift-row-head span{font-size:13px;color:var(--desk-muted);font-variant-numeric:tabular-nums}
+.shift-row-bar{height:8px;border-radius:99px;background:#e6edf1;margin-top:10px;overflow:hidden}
+.shift-row-bar>span{display:block;height:100%;background:var(--desk-accent);border-radius:99px}
+/* Readiness checklist rows. */
+.readiness-item{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-top:1px solid var(--desk-border)}
+.readiness-item:first-child{border-top:0;padding-top:2px}
+.readiness-item .readiness-text{flex:1;min-width:0}
+/* Status pills. */
+.pill-amber{background:var(--desk-amber-soft);color:var(--desk-amber)}
+.pill-red{background:var(--desk-red-soft);color:var(--desk-red)}
+.pill-blue{background:var(--desk-blue-soft);color:var(--desk-blue)}
+/* Empty states: centered icon, title, text, action. */
+.empty{padding:36px 16px;color:var(--desk-muted)}
+.empty-state{text-align:center;padding:44px 20px}
+.empty-state .empty-icon{width:56px;height:56px;border-radius:50%;background:var(--desk-accent-soft);color:var(--desk-accent-ink);display:grid;place-items:center;margin:0 auto 14px}
+.empty-state h3{margin:0 0 6px;font-size:16px}
+.empty-state p{margin:0 auto 16px;max-width:420px;color:var(--desk-muted);font-size:13px}
+/* Notices and errors. */
+.notice{border-radius:12px;border-left:4px solid var(--desk-amber-line)}
+/* Shift tabs: bigger, clearer active state. */
+.shift-tab{padding:16px;border-radius:14px;box-shadow:var(--desk-shadow);transition:border-color .15s,box-shadow .15s,transform .15s}
+.shift-tab:hover{transform:translateY(-1px)}
+.shift-tab.is-active{border-color:var(--desk-accent);background:var(--desk-accent-soft);box-shadow:0 0 0 2px rgba(27,158,125,.25),var(--desk-shadow)}
+.shift-tab b{font-size:14px}
+.shift-progress{height:8px;background:#e6edf1}
+/* Room cards: lift on hover, thicker occupancy track. */
+.room-summary-card{border-radius:var(--desk-radius);box-shadow:var(--desk-shadow)}
+.room-summary-card:hover{transform:translateY(-2px);box-shadow:var(--desk-shadow-hover)}
+.room-card-stats b{font-size:22px}
+.occupancy-track{height:8px;background:#e9eff3}
+/* Tables: rounder wrap, quieter header. */
+.table-wrap{border-radius:14px;box-shadow:var(--desk-shadow)}
+/* Dark mode for the design system. */
+@media screen{
+[data-mantine-color-scheme="dark"]{--desk-bg:#0e1620;--desk-surface:#16222e;--desk-text:#e3ecf4;--desk-muted:#9db0c2;--desk-border:#2b3c4e;--desk-soft:#1c2b3a;--desk-accent:#5cc8ae;--desk-accent-strong:#7edbc0;--desk-accent-soft:#14382f;--desk-accent-ink:#8fe3c8;--desk-amber:#e8c96a;--desk-amber-soft:#3a3122;--desk-amber-border:#665639;--desk-amber-line:#d9a514;--desk-red:#ff9d97;--desk-red-soft:#39242d;--desk-blue:#8db4e8;--desk-blue-soft:#1b2c44;--desk-violet:#b9a3e3;--desk-violet-soft:#2a2340;--desk-shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.3);--desk-shadow-hover:0 2px 6px rgba(0,0,0,.35),0 16px 34px rgba(0,0,0,.4)}
+[data-mantine-color-scheme="dark"] .scholar-sidebar{background:linear-gradient(180deg,#0b141d,#0a121a)}
+[data-mantine-color-scheme="dark"] .metric-bar,[data-mantine-color-scheme="dark"] .shift-progress,[data-mantine-color-scheme="dark"] .shift-row-bar,[data-mantine-color-scheme="dark"] .occupancy-track{background:#2c3d4e}
+[data-mantine-color-scheme="dark"] .shift-tab.is-active{background:#123c32}
+[data-mantine-color-scheme="dark"] .attention-card{background:linear-gradient(115deg,#2e2a18,#262417);border-color:#665639}
+[data-mantine-color-scheme="dark"] .attention-card .attention-title{color:#f0d896}
+[data-mantine-color-scheme="dark"] .attention-card p{color:#cbbd8f}
+[data-mantine-color-scheme="dark"] .next-action-card{background:linear-gradient(120deg,#0d4f3f,#0a6b52 60%,#0b5c46);box-shadow:0 12px 32px rgba(0,0,0,.4)}
+[data-mantine-color-scheme="dark"] .notice{background:#3a3122;color:#ead6a8;border-color:#665639;border-left-color:#d9a514}
+}
+/* Small screens: keep the lock badge visible, shrink metric numbers. */
+@media(max-width:767px){
+.page-intro{flex-wrap:wrap}
+.page-intro h1{font-size:24px}
+.page-intro>.mantine-Badge-root{display:inline-flex;max-width:100%}
+.metric-number{font-size:30px!important}
+.next-action-card{padding:20px}
+.section-head{align-items:flex-start;flex-direction:column;gap:10px}
+.shift-tab{min-width:150px}
+}
+@media(max-width:480px){
+.metric-card{padding:16px!important}
+.metric-icon{width:38px;height:38px}
+.metric-number{font-size:28px!important}
+}
+
+/* ---- Design system · follow-ups from the page rollout ---- */
+/* Wizard stepper (AllocationWizard): numbered circles, token colours. */
+.wizard-stepper{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.wizard-steps{display:flex;gap:6px}
+.wizard-step{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--desk-soft);color:var(--desk-muted);flex-shrink:0}
+.wizard-step.is-active{background:var(--desk-accent);color:var(--desk-surface)}
+.wizard-step.is-done{background:var(--desk-accent-soft);color:var(--desk-accent-ink)}
+.wizard-step-label{margin:0}
+/* Volunteer offline-pack block: separated section inside the search card. */
+.offline-pack{margin-top:24px;border-top:1px solid var(--desk-border);padding-top:18px}
+/* Filter rows grouped inside a panel (Students). */
+.filter-rows{background:var(--desk-soft);border:1px solid var(--desk-border);border-radius:12px;padding:16px;margin-bottom:16px}
+.filter-rows .toolbar{margin-bottom:12px}
+.filter-rows .toolbar:last-child{margin-bottom:0}
+/* Neutral pill (e.g. room status "Empty"). */
+.pill-neutral{background:#e9eef2;color:#5d7284}
+/* Section head inside a flex Group (portal registration card). */
+.section-head.in-group{flex:1;margin-bottom:0}
+/* Destructive room actions, separated from the safe ones. */
+.room-danger-group{display:flex;gap:8px;padding-left:12px;margin-left:4px;border-left:1px solid var(--desk-border)}
+@media screen{
+[data-mantine-color-scheme="dark"] .pill-neutral{background:#2c3d4e;color:#b4c6d8}
+}
+/* A label styled as a primary button (e.g. CSV import) keeps white text — the toolbar label colour would otherwise win over styles.css .button. */
+.toolbar>label.button{color:#fff}
