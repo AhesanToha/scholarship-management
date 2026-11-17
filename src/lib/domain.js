@@ -67,7 +67,7 @@ export function roomAffectedStudents(state,r,d){return state.students.filter(s=>
 
 export function updateRoomModel(state,r,d){const affected=roomAffectedStudents(state,r,d);affected.forEach(s=>s.seat=null);const oldCounts=columnCounts(r);Object.assign(r,d);if(!validCounts(oldCounts,r.benches)){r.mapColumns=Math.min(oldCounts.length,r.benches);r.columnBenches=balancedCounts(r.benches,r.mapColumns)}else r.columnBenches=oldCounts;state.students.filter(s=>s.seat?.roomId===r.id).forEach(s=>Object.assign(s.seat,{room:r.name,building:r.building,floor:r.floor,directions:r.directions}));return affected.length}
 
-export function deleteRoomModel(state,id){state.students.filter(s=>s.seat?.roomId===id).forEach(s=>s.seat=null);state.rooms=state.rooms.filter(r=>r.id!==id);state.exam.locked=false}
+export function deleteRoomModel(state,id){state.students.filter(s=>s.seat?.roomId===id).forEach(s=>s.seat=null);state.rooms=state.rooms.filter(r=>r.id!==id)}
 
 export function seatKey(s){return s.roomId+':'+s.bench+':'+s.position}
 

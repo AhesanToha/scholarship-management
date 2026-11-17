@@ -177,6 +177,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .readiness-item:first-child{border-top:0;padding-top:2px}
 .readiness-item .readiness-text{flex:1;min-width:0}
 /* Status pills. */
+.pill{background:#e6f4ee;color:#0b5c46}
 .pill-amber{background:var(--desk-amber-soft);color:var(--desk-amber)}
 .pill-red{background:var(--desk-red-soft);color:var(--desk-red)}
 .pill-blue{background:var(--desk-blue-soft);color:var(--desk-blue)}

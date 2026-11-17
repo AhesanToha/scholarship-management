@@ -40,6 +40,7 @@ assert.throws(()=>buildAllocationPlan(full,{roomId:full.rooms[0].id,shiftId:'shi
 // outrank plain .map-seat.planned, so the highlight needs its own dark rule.
 const css=readFileSync('src/scholarship.css','utf8');
 assert(css.includes('[data-mantine-color-scheme="dark"] .map-seat.planned'),'dark mode must keep the planned amber highlight');
+assert(css.includes('.pill{background:#e6f4ee;color:#0b5c46}'),'the Full pill needs its own light-mode colour so the room tint cannot override it');
 // "Unable to assign seats" — one bench, the only free seat's bench-mate is
 // the only school the selection allows, so no valid placement exists.
 const trap=seed();ensureTokens(trap);trap.rooms[0].benches=1;trap.rooms[0].columnBenches=[1];
@@ -209,9 +210,17 @@ assert(document.querySelector('#active-room-panel'),'a room is selected from the
 const lockedBtns=[...document.querySelectorAll('button')].filter(b=>b.textContent.includes('Seating locked'));
 assert.equal(lockedBtns.length,7,'every allocate entry point should say Seating locked (5 cards + auto-fill + selected room)');
 assert(lockedBtns.every(b=>b.disabled),'locked allocate buttons must be disabled');
+assert(button("Clear assignments").disabled&&button("Delete room").disabled&&button("Edit room").disabled,'clear, delete and edit must be disabled while seating is locked');
+const addForm=document.querySelector('.room-tool form');
+assert(addForm,'add room form must be present while locked');
+addForm.querySelector('[name="name"]').value='Room X';addForm.querySelector('[name="building"]').value='B';addForm.querySelector('[name="floor"]').value='1';addForm.querySelector('[name="benches"]').value='5';addForm.querySelector('[name="per"]').value='2';addForm.querySelector('[name="directions"]').value='Near gate';
+await act(async()=>{addForm.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));await pause()});
+assert.equal(store.getSnapshot().state.rooms.length,6,'adding a room while locked must add it');
+assert.equal(store.getSnapshot().state.exam.locked,true,'adding a room must not unlock seating');
 await click(button("Unlock allocation"));
 assert(button("Allocate seats"),'unlocking should restore the allocate buttons');
 assert(![...document.querySelectorAll('.room-allocate-btn')].some(b=>b.disabled),'allocate buttons must be enabled after unlock');
+assert(!button("Clear assignments").disabled&&!button("Delete room").disabled&&!button("Edit room").disabled,'clear, delete and edit must be enabled after unlock');
 await act(async()=>{root5.unmount()});
 
 // 4. Deep link: opening /rooms/<id>?allocate=1 opens the wizard for that room.
